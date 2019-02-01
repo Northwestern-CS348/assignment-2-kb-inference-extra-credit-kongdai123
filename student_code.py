@@ -3,12 +3,14 @@ from util import *
 from logical_classes import *
 
 verbose = 0
+index = 0
 
 class KnowledgeBase(object):
     def __init__(self, facts=[], rules=[]):
         self.facts = facts
         self.rules = rules
         self.ie = InferenceEngine()
+    
 
     def __repr__(self):
         return 'KnowledgeBase({!r}, {!r})'.format(self.facts, self.rules)
@@ -142,8 +144,40 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        global index
+        i = index
+        result = indent(i)
+        explain = None
+        if isinstance(fact_or_rule, Fact):
+            explain = self._get_fact(fact_or_rule);
+            if (explain == None): return "Fact is not in the KB"
+            result = result + "fact: " + str(explain.statement)
+        elif isinstance(fact_or_rule, Rule):
+            explain = self._get_rule(fact_or_rule);
+            if (explain == None): return "Rule is not in the KB"
+            result = result + "rule: ("
+            for s in range(len(explain.lhs) - 1):
+                result = result + str(explain.lhs[s]) + ", "
+            result = result + str(explain.lhs[len(explain.lhs) - 1])
+            result = result + ") -> "+str(explain.rhs)
+        else: return False
 
+        if explain.asserted == True:
+            result = result + " ASSERTED"
+            return result
+        for s in explain.supported_by:
+            result = result + "\n" + indent(i + 2) + "SUPPORTED BY"
+            index = index + 4
+            result = result + "\n" +  self.kb_explain(s[0])
+            result = result + "\n" +  self.kb_explain(s[1])
+            index = i
+        return result
 
+def indent(i):
+    result = "";
+    for s in range(i):
+        result = result + " "
+    return result;
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
         """Forward-chaining to infer new facts and rules
